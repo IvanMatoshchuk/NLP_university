@@ -23,12 +23,19 @@ from utils.preprocess import clean_text, read_text, read_text_splitted
 # %autoreload 2
 
 
+project_path = pathlib.Path(__file__).parent
+
+project_path
+
 # %%
 
 
+
+
 lang = "en"
-path_to_text = r"D:\Uni\Master\FU Data Science\Lectures\SS_21\NLP\project\task_1\data\Harry_en.txt"
+path_to_text = os.path.join(project_path,"data","Harry_en.txt")
 read_saved = True
+treeTagger_path = os.path.join(project_path.parent.parent,"TreeTagger")
 
 text = read_text_splitted(path_to_text)
 labeled_pos = pd.read_csv("tokens_POS_labeled.csv", index_col=0)
@@ -81,7 +88,7 @@ labeled_pos["NLTK_pos_pred"] = pos_nltk
 
 
 tagger = treetaggerwrapper.TreeTagger(
-    TAGDIR=r"D:\Uni\Master\FU Data Science\Lectures\SS_21\NLP\TreeTagger", TAGLANG=lang,
+    TAGDIR=treeTagger_path, TAGLANG=lang,
 )
 
 print(f"TreeTagger tokenization...\n")
