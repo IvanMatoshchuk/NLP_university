@@ -20,8 +20,8 @@ from utils.postprocess import save_xlsx
 
 # %%
 
-# %reload_ext autoreload
-# %autoreload 2
+%reload_ext autoreload
+%autoreload 2
 
 
 project_path = pathlib.Path(__file__).parent
@@ -115,12 +115,14 @@ nlp = spacy.load("en_core_web_sm")
 doc = nlp(last_5_sent_full_clean)
 
 tokens_pos = []
+tokens_tag = []
 tokens_dep = []
 tokens_pos_full = []
 
 for token in doc:
     tokens_pos.append(token.pos_)
     tokens_dep.append(token.dep_)
+    tokens_tag.append(token.tag_)
 
     tokens_pos_full.append(spacy.explain(token.pos_))
 
@@ -131,8 +133,13 @@ if len(tokens_pos) != labeled_pos.shape[0]:
 # labeled_pos["Spacy_pos_pred_full"] = tokens_pos_full
 
 spacy_pos = pd.concat(
-    [labeled_pos, pd.DataFrame({"Spacy_pos_pred": tokens_pos, "Spacy_pos_full_pred": tokens_pos_full})], axis=1
+    [
+        labeled_pos,
+        pd.DataFrame({"Spacy_pos_pred": tokens_pos, "Spacy_pos_full_pred": tokens_pos_full, "Spacy_tag": tokens_tag}),
+    ],
+    axis=1,
 )
+
 
 
 # %%
@@ -164,11 +171,10 @@ print(labeled_pos.shape)
 save_xlsx([nltk_pos,TreeTagger_pos,spacy_pos,pattern_pos],
 ["nltk_pos","TreeTagger_pos","spacy_pos","pattern_pos"])
 
-#labeled_pos.to_csv("pos_full_pred.csv", index=False)
-print("Generated pos_full_pred.csv\n")
 
-# print("\nPreview:")
-# labeled_pos.head()
+print("Generated pos_full_pred_splitted.csv\n")
+
+
 
 
 
