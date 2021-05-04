@@ -16,26 +16,27 @@ from pattern.en import pprint
 
 
 from utils.preprocess import clean_text, read_text, read_text_splitted
+from utils.postprocess import save_xlsx
 
 # %%
 
-# %reload_ext autoreload
-# %autoreload 2
+%reload_ext autoreload
+%autoreload 2
 
 
 project_path = pathlib.Path(__file__).parent
 
-project_path
+print(project_path)
 
 # %%
 
-
-
+# arguments
 
 lang = "en"
-path_to_text = os.path.join(project_path,"data","Harry_en.txt")
+path_to_text = os.path.join(project_path, "data", "Harry_en.txt")
 read_saved = True
-treeTagger_path = os.path.join(project_path.parent.parent,"TreeTagger")
+treeTagger_path = os.path.join(project_path.parent.parent, "TreeTagger")
+
 
 text = read_text_splitted(path_to_text)
 labeled_pos = pd.read_csv("tokens_POS_labeled.csv", index_col=0)
@@ -68,7 +69,6 @@ if not read_saved:
 if len(tags_nltk) != labeled_pos.shape[0]:
     print("inconsistency between nltk pos and labeled pos")
 
-
 # %%
 
 # Part of Speech NLTK
@@ -79,7 +79,10 @@ pos_nltk = []
 for pos in nltk.pos_tag(tags_nltk, lang="eng"):
     pos_nltk.append(pos[1])
 
-labeled_pos["NLTK_pos_pred"] = pos_nltk
+nltk_pos = pd.concat([labeled_pos, pd.DataFrame(pos_nltk, columns=["NLTK_pos_pred"])], axis=1)
+
+# labeled_pos["NLTK_pos_pred"] = pos_nltk
+
 
 
 # %%
@@ -87,9 +90,7 @@ labeled_pos["NLTK_pos_pred"] = pos_nltk
 # Part of Speech TreeTagger
 
 
-tagger = treetaggerwrapper.TreeTagger(
-    TAGDIR=treeTagger_path, TAGLANG=lang,
-)
+tagger = treetaggerwrapper.TreeTagger(TAGDIR=treeTagger_path, TAGLANG=lang,)
 
 print(f"TreeTagger tokenization...\n")
 tags = tagger.tag_text(last_5_sent_full_clean)
@@ -99,7 +100,10 @@ print(f"Number of tokens: {len(tags_treetagger)}")
 if len(tags_treetagger) != labeled_pos.shape[0]:
     print("inconsistency between nltk pos and labeled pos")
 
-labeled_pos["TreeTag_pos_pred"] = tags_treetagger
+
+TreeTagger_pos = pd.concat([labeled_pos, pd.DataFrame(tags_treetagger, columns=["TreeTag_pos_pred"])], axis=1)
+
+# labeled_pos["TreeTag_pos_pred"] = tags_treetagger
 
 
 # %%
@@ -111,16 +115,32 @@ nlp = spacy.load("en_core_web_sm")
 doc = nlp(last_5_sent_full_clean)
 
 tokens_pos = []
+tokens_tag = []
 tokens_dep = []
+tokens_pos_full = []
 
 for token in doc:
     tokens_pos.append(token.pos_)
     tokens_dep.append(token.dep_)
+    tokens_tag.append(token.tag_)
+
+    tokens_pos_full.append(spacy.explain(token.pos_))
 
 if len(tokens_pos) != labeled_pos.shape[0]:
     print("inconsistency between spacy pos and labeled pos")
 
-labeled_pos["Spacy_pos_pred"] = tokens_pos
+# labeled_pos["Spacy_pos_pred"] = tokens_pos
+# labeled_pos["Spacy_pos_pred_full"] = tokens_pos_full
+
+spacy_pos = pd.concat(
+    [
+        labeled_pos,
+        pd.DataFrame({"Spacy_pos_pred": tokens_pos, "Spacy_pos_full_pred": tokens_pos_full, "Spacy_tag": tokens_tag}),
+    ],
+    axis=1,
+)
+
+
 
 # %%
 
@@ -132,20 +152,38 @@ s = split(s)
 pattern_pos = []
 
 for i in range(len(s)):
-    pattern_pos = pattern_pos + list(s.sentences[i].pos)
+    pattern_pos.extend(list(s.sentences[i].pos))
 
 if len(pattern_pos) != labeled_pos.shape[0]:
     print("inconsistency between pattern pos and labeled pos")
 
-labeled_pos["Pattern_pos_pos_pred"] = tokens_pos
+#labeled_pos["Pattern_pos_pred"] = pattern_pos
+
+pattern_pos = pd.concat(
+    [labeled_pos, pd.DataFrame({"Pattern_pos_pred": pattern_pos})], axis=1
+)
+
+
 
 # %%
+print(labeled_pos.shape)
 
-[] + ["a"]
+save_xlsx([nltk_pos,TreeTagger_pos,spacy_pos,pattern_pos],
+["nltk_pos","TreeTagger_pos","spacy_pos","pattern_pos"])
+
+
+print("Generated pos_full_pred_splitted.csv\n")
+
+
+
 
 
 # %%
-print(labeled_pos)
+# Chunks pattern
 
-labeled_pos.to_csv("pos_full_pred.csv", index=False)
 
+s = parse(last_5_sent_full_clean)
+pprint(s)
+
+
+# %%
