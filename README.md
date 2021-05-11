@@ -2,7 +2,7 @@
 ## Name them like this -> main-participant_1-participant_2
 
 ---
-Data is located in the "DATA" folder
+Data is located in the branch **main** "DATA" folder
 
 ---
 ## NLP_university
