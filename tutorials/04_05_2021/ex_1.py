@@ -13,7 +13,7 @@ text_tokenized = nltk.corpus.gutenberg.words("bible-kjv.txt")
 
 # %%
 
-
+a= 3
 def generate_model(cfdist, word, num=15):
     for i in range(num):
         print(word)
